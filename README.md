@@ -56,4 +56,23 @@ RabbitMQ 实战
 - Erlang 基于虚拟机解释运行，跨平台部署
 - Erlang 进程间上下文切换效率远高于 C 语言
 - Erlang 有着和原生 Socket 一样的延迟
-            
+## 什么是 AMQP 协议？            
+- AMQP 协议作为 RabbitMQ 的规范，规定了 RabbitMQ 对外接口
+- 学会了 AMQP 协议的使用，就基本掌握了 RabbitMQ 的使用
+- 学会了 AMQP 协议的概念，就基本掌握了 RabbitMQ 的核心概念
+
+![](https://files.mdnice.com/user/19026/41852710-0f28-4a91-9596-4744f1fa58fa.png)
+
+名词解释：
+- Broker：接收和分发消息的应用，RabbitMQ 就是 Message Broker
+- Virtual Host：虚拟 Broker，将多个单元隔离开
+- Connection：publisher/consumer 和 Broker 之间的 TCP 连接
+- Channel：Connection 内部建立的逻辑连接，通常每个线程创建单独的 Channel
+- Routing Key：路由键，用来指示消息的路由转发，相当于快递的地址
+- Exchange：交换机，相当于快递的分拨中心
+- Queue：消息队列，消息最终被送到这里等待 Consumer 取走消费
+
+在 AMQP 协议或是 RabbitMQ 的实现中，最核心的组件是 Exchange
+- Exchange 承担着 RabbitMQ 的核心功能——路由转发
+- Exchange 有多个种类，配置多变
+
