@@ -73,6 +73,35 @@ RabbitMQ 实战
 - Queue：消息队列，消息最终被送到这里等待 Consumer 取走消费
 
 在 AMQP 协议或是 RabbitMQ 的实现中，最核心的组件是 Exchange
+
+
+#### Exchange 的作用
 - Exchange 承担着 RabbitMQ 的核心功能——路由转发
-- Exchange 有多个种类，配置多变
+- Exchange 的功能是根据绑定关系和路由键为消息提供路由，将消息转发至相应的队列
+- Exchange 有四种类型
+    - Direct
+    - Topic
+    - Fanout
+    - Headers
+    
+    其中 Headers 使用的很少，主要以其他三种为主。    
+#### Direct Exchange
+Message 中的 Routing Key 如果和 Binding Key 一致，Direct Exchange 则将消息发到对应的 Queue 中
+#### Fanout Exchange
+每个发到 Fanout Exchange 的消息都会分发（广播）到所有绑定的 Queue 上去
+#### Topic Exchange
+根据 Routing Key 及通配规则，Topic Exchange 将消息分发到目标 Queue 中
+通配规则分为：
+1. 全匹配：与 Direct 类似
+2. Binding Key 中的 `#` 表示可以匹配任意个数的 word
+3. Binding Key 中的 `*` 表示可以匹配任意一个 word
+   
+#### 总结：
+Exchange 主要的，最常用的只有三种类型：Direct/Topic/Fanout
+- Direct(直接路由)：Routing Key = Binding Key，容易配置和使用
+- Fanout(广播路由)：群发绑定的所有队列，适用于消息广播
+- Topic(话题路由)：功能较为复杂，但能降级为 Direct，所以建议优先使用，为以后拓展留余地
+
+模拟 RabbitMQ 发消息：[RabbitMQ Simulator](http://tryrabbitmq.com/)    
+
 
