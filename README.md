@@ -104,4 +104,14 @@ Exchange 主要的，最常用的只有三种类型：Direct/Topic/Fanout
 
 模拟 RabbitMQ 发消息：[RabbitMQ Simulator](http://tryrabbitmq.com/)    
 
+## RabbitMQ 快速安装
+            
+### MacOS 安装
+1. `brew update`
+2. `brew install rabbitmq`
+3. 启动：`brew services start rabbitmq`
+### Docker
+```bash
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
+```
 
