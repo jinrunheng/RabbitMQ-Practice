@@ -115,3 +115,8 @@ Exchange 主要的，最常用的只有三种类型：Direct/Topic/Fanout
 docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
 ```
 
+## RabbitMQ 网页端管理控制台
+
+- 启动应用：`rabbitmq-plugins enable rabbitmq_management`
+- 浏览器打开：`127.0.0.1:15672`
+- 默认用户名/密码：`guest`
