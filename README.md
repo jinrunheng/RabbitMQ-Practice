@@ -111,6 +111,8 @@ Exchange 主要的，最常用的只有三种类型：Direct/Topic/Fanout
 2. `brew install rabbitmq`;mac 默认的下载路径为：`/usr/local/Cellar/rabbitmq/`
 3. 启动：`brew services start rabbitmq`
 4. 后台启动：`rabbitmq-server -detached `
+5. 直接启动：`rabbitmq-server`
+6. 关闭服务：`rabbitmqctl stop`
 ### Docker
 ```bash
 docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
@@ -129,4 +131,33 @@ rabbitmqctl set_user_tags admin administrator #设置用户最高操作权限
 ```
 这样用户名和登陆密码为：`admin/123456`
 
+## RabbitMQ 常用命令行
 
+### 状态查看
+
+- 查看状态:`rabbitmqctl status`
+- 查看绑定：`rabbitmqctl list_bindings`
+- 查看 channel：`rabbitmqctl list_channels`
+- 查看 connection：`rabbitmqctl list_connections`
+- 查看消费者：`rabbitmqctl list_consumers`
+- 查看交换机：`rabbitmqctl list_exchanges`
+
+### 队列相关
+
+- 查看队列：`rabbitmqctl list_queues`
+- 删除队列：`rabbitmqctl delete_queue`
+- 清空队列：`rabbitmqctl purge_queue`
+
+### 用户相关
+
+- 新建用户：`rabbitmqctl add_user`
+- 修改用户密码：`rabbitmqctl change_password`
+- 删除用户：`rabbitmqctl delete_user`
+- 查看用户：`rabbitmqctl list_users`
+- 设置用户角色：`rabbitmqctl rabbitmqctl set_user_tags`
+
+### 应用启停
+
+- 启动应用：`rabbitmqctl start_qpp`
+- 关闭应用：`rabbitmqctl stop_app`，保留 Erlang 虚拟机（暂停）
+- 关闭应用：`rabbitmqctl stop`，并关闭 Erlang 虚拟机
