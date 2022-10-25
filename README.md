@@ -108,8 +108,9 @@ Exchange 主要的，最常用的只有三种类型：Direct/Topic/Fanout
             
 ### MacOS 安装
 1. `brew update`
-2. `brew install rabbitmq`
+2. `brew install rabbitmq`;mac 默认的下载路径为：`/usr/local/Cellar/rabbitmq/`
 3. 启动：`brew services start rabbitmq`
+4. 后台启动：`rabbitmq-server -detached `
 ### Docker
 ```bash
 docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
@@ -119,4 +120,13 @@ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-ma
 
 - 启动应用：`rabbitmq-plugins enable rabbitmq_management`
 - 浏览器打开：`127.0.0.1:15672`
-- 默认用户名/密码：`guest`
+- 默认用户名/密码：`guest/guest`
+
+建议初始化用户名和密码,进入到 sbin 目录下，执行命令：
+```bash
+rabbitmqctl add_user admin 123456 #用户名admin，密码123456
+rabbitmqctl set_user_tags admin administrator #设置用户最高操作权限
+```
+这样用户名和登陆密码为：`admin/123456`
+
+
