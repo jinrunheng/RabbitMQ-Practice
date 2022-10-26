@@ -211,3 +211,4 @@ docker run --name rabbit -e MYSQL_ROOT_PASSWORD=123 -e MYSQL_DATABASE=rabbit -e 
 ```bash
 mvn flyway:clean flyway:migrate
 ```
+#### SpringBoot 项目搭建
