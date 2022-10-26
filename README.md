@@ -196,15 +196,18 @@ rabbitmqctl set_user_tags admin administrator #设置用户最高操作权限
 - 接口采用 REST 风格
 
 ### 数据库设计与项目搭建
-
 #### 微服务数据库的设计原则
 - 每个微服务使用自己的数据库
 - 不要使用共享数据库的方式进行通信
 - 不要使用外键，对于数据量非常少的表谨慎使用索引
-#### 建表语句
-DELIVERYMAN.sql:
-```sql
-CREATE TABLE `deliveryman` (
-    `id` int not null auto_increment comment `骑手 ID`
-)
+
+#### 项目数据库设计图
+![](https://files.mdnice.com/user/19026/a7a33e7e-ae65-4c29-8216-248217d26ff6.png)
+#### Docker 开启数据库 & FlyWay 数据表创建与数据迁移
+```bash
+docker run --name rabbit -e MYSQL_ROOT_PASSWORD=123 -e MYSQL_DATABASE=rabbit -e TZ=Asia/Shanghai -p 3306:3306 -d mysql
+```
+进入到项目的 db 目录下，执行命令：
+```bash
+mvn flyway:clean flyway:migrate
 ```
