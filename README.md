@@ -188,10 +188,23 @@ rabbitmqctl set_user_tags admin administrator #设置用户最高操作权限
 - 积分微服务：积分微服务
 ### 业务流程
 
-![](https://files.mdnice.com/user/19026/a361cfb9-33ea-470e-935a-b52ad9150809.png)
-
+![](https://files.mdnice.com/user/19026/65f57278-819f-4772-885f-df0687ed9073.png)
 ### 接口需求
 
 - 新建订单接口
 - 查询订单接口
 - 接口采用 REST 风格
+
+### 数据库设计与项目搭建
+
+#### 微服务数据库的设计原则
+- 每个微服务使用自己的数据库
+- 不要使用共享数据库的方式进行通信
+- 不要使用外键，对于数据量非常少的表谨慎使用索引
+#### 建表语句
+DELIVERYMAN.sql:
+```sql
+CREATE TABLE `deliveryman` (
+    `id` int not null auto_increment comment `骑手 ID`
+)
+```
