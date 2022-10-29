@@ -212,3 +212,9 @@ docker run --name rabbit -e MYSQL_ROOT_PASSWORD=123 -e MYSQL_DATABASE=rabbit -e 
 mvn flyway:clean flyway:migrate
 ```
 #### SpringBoot 项目搭建
+
+### 利用 Direct Exchange 开发商家和骑手微服务
+
+Message 中的 Routing Key 如果和 Binding Key 一致，那么 Direct Exchange 则将 Message 发送到对应的 Queue 中
+
+![](https://files.mdnice.com/user/19026/4c1a5a6c-2a4e-4690-ba0b-de2adb0312aa.png)
