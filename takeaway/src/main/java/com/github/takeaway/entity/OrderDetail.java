@@ -1,8 +1,7 @@
 package com.github.takeaway.entity;
 
 import com.github.takeaway.enummeration.OrderStatusEnum;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -14,6 +13,9 @@ import java.util.Date;
  */
 @Data
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class OrderDetail {
     private Integer id;
     private OrderStatusEnum status;

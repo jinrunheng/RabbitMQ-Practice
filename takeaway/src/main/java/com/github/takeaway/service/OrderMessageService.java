@@ -19,7 +19,7 @@ public class OrderMessageService {
     /**
      * 声明消息队列，交换机，绑定，消息的处理
      */
-    public static void handleMessage() {
+    public void handleMessage() {
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
 
@@ -46,10 +46,5 @@ public class OrderMessageService {
             e.printStackTrace();
         }
 
-    }
-
-
-    public static void main(String[] args) {
-        handleMessage();
     }
 }

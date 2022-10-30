@@ -1,8 +1,7 @@
 package com.github.takeaway.dto;
 
 import com.github.takeaway.enummeration.OrderStatusEnum;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -15,6 +14,9 @@ import java.math.BigDecimal;
  */
 @Data
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class OrderMessageDTO {
     /**
      * 订单 ID
