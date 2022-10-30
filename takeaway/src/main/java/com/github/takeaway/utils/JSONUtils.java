@@ -25,7 +25,7 @@ public class JSONUtils {
      * @param jsonStr
      * @return
      */
-    public static Object jsonToObject(String jsonStr) {
-        return JSON.parseObject(jsonStr);
+    public static Object jsonToObject(String jsonStr, Class<?> clazz) {
+        return JSON.parseObject(jsonStr, clazz);
     }
 }
