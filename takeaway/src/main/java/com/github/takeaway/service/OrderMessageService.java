@@ -7,6 +7,7 @@ import com.github.takeaway.enummeration.OrderStatusEnum;
 import com.github.takeaway.utils.JSONUtils;
 import com.rabbitmq.client.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -26,8 +27,9 @@ public class OrderMessageService {
     private IOrderDetailDao orderDetailDao;
 
     /**
-     * 声明消息队列，交换机，绑定，消息的处理
+     * 声明消息队列，交换机，绑定，消息的处理，为异步线程，使用 @Async 注解
      */
+    @Async
     public void handleMessage() {
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
@@ -50,6 +52,13 @@ public class OrderMessageService {
             // Queue 与 Exchange 绑定
             channel.queueBind("queue.order", "exchange.order.deliveryman", "key.order");
 
+            // 注册消费方法
+            channel.basicConsume("queue.order", true, deliverCallback, consumerTag -> {
+            });
+
+            while (true) {
+                Thread.sleep(10000);
+            }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -57,6 +66,7 @@ public class OrderMessageService {
 
     }
 
+    // 消费者消费的回调方法
     DeliverCallback deliverCallback = ((consumerTag, message) -> {
         String msg = new String(message.getBody());
 
