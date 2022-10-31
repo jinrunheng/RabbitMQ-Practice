@@ -38,7 +38,7 @@
         where id = #{id}
     </update>
 
-    <select id="queryOrder" parameterType="java.lang.String" resultMap="orderDetailResultMap">
+    <select id="queryOrder" parameterType="java.lang.Integer" resultMap="orderDetailResultMap">
         select *
         from `rabbit`.`order_detail`
         where id = #{id}
