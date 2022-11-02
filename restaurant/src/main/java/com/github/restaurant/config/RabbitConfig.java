@@ -2,6 +2,7 @@ package com.github.restaurant.config;
 
 import com.github.restaurant.service.OrderMessageService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.Resource;
@@ -14,10 +15,10 @@ import javax.annotation.Resource;
 @Slf4j
 @Configuration
 public class RabbitConfig {
-    @Resource
+    @Autowired
     private OrderMessageService orderMessageService;
 
-    @Resource
+    @Autowired
     public void startListenMessage() {
         orderMessageService.handleMessage();
     }

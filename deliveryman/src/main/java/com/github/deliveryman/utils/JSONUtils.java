@@ -1,4 +1,4 @@
-package com.github.takeaway.utils;
+package com.github.deliveryman.utils;
 
 import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -6,9 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @Author Dooby Kim
- * @Date 2022/10/30 4:49 下午
+ * @Date 2022/11/2 7:22 下午
  * @Version 1.0
- * 基于 fastjson2 的，实现 JSON 字符串与对象之间的序列化与反序列化工具类
  */
 public class JSONUtils {
 
@@ -44,3 +43,5 @@ public class JSONUtils {
         }
     }
 }
+
+

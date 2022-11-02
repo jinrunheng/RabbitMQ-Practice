@@ -1,6 +1,8 @@
 package com.github.restaurant.utils;
 
 import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @Author Dooby Kim
@@ -15,7 +17,14 @@ public class JSONUtils {
      * @return
      */
     public static String objectToJson(Object obj) {
-        return JSON.toJSONString(obj);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -25,7 +34,13 @@ public class JSONUtils {
      * @return
      */
     public static Object jsonToObject(String jsonStr, Class<?> clazz) {
-        return JSON.parseObject(jsonStr, clazz);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(jsonStr, clazz);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
 

@@ -2,6 +2,7 @@ package com.github.restaurant.dao;
 
 import com.github.restaurant.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -12,5 +13,6 @@ import org.springframework.stereotype.Repository;
 @Mapper
 @Repository
 public interface IProductDao {
+    @Select("SELECT id,name,price,restaurant_id restaurantId,status,date FROM product WHERE id = #{id}")
     Product queryProduct(Integer productId);
 }
