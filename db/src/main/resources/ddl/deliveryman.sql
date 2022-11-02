@@ -32,6 +32,6 @@ CREATE TABLE `deliveryman`  (
 -- ----------------------------
 -- Records of deliveryman
 -- ----------------------------
-INSERT INTO `deliveryman` VALUES (1, 'wangxiaoer', 'AVALIABLE', '2020-06-10 20:30:17');
+INSERT INTO `deliveryman` VALUES (1, 'wangxiaoer', 'AVAILABLE', '2020-06-10 20:30:17');
 
 SET FOREIGN_KEY_CHECKS = 1;

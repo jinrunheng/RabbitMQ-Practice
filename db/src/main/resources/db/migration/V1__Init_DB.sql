@@ -37,7 +37,7 @@ CREATE TABLE `deliveryman`
 -- ----------------------------
 BEGIN;
 INSERT INTO `deliveryman`
-VALUES (1, 'wangxiaoer', 'AVALIABLE', '2020-06-10 20:30:17');
+VALUES (1, 'wangxiaoer', 'AVAILABLE', '2020-06-10 20:30:17');
 COMMIT;
 DROP TABLE IF EXISTS `order_detail`;
 CREATE TABLE `order_detail`
@@ -79,7 +79,7 @@ CREATE TABLE `product`
 -- ----------------------------
 BEGIN;
 INSERT INTO `product`
-VALUES (2, 'eqwe', 23.25, 1, 'AVALIABLE', '2020-05-06 19:19:04');
+VALUES (2, 'eqwe', 23.25, 1, 'AVAILABLE', '2020-05-06 19:19:04');
 COMMIT;
 DROP TABLE IF EXISTS `restaurant`;
 CREATE TABLE `restaurant`
