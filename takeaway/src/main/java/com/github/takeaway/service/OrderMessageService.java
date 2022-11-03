@@ -52,6 +52,11 @@ public class OrderMessageService {
             // Queue 与 Exchange 绑定
             channel.queueBind("queue.order", "exchange.order.deliveryman", "key.order");
 
+            // 声明结算的 Exchange
+            channel.exchangeDeclare("exchange.order.settlement", BuiltinExchangeType.FANOUT, true, false, null);
+            // Queue 与 Exchange 绑定
+            channel.queueBind("queue.order", "exchange.order.settlement", "key.order");
+
             // 注册消费方法
             channel.basicConsume("queue.order", true, deliverCallback, consumerTag -> {
             });
@@ -107,6 +112,27 @@ public class OrderMessageService {
                     }
                     break;
                 case RESTAURANT_CONFIRMED:
+                    if (orderMessageDTO.getDeliverymanId() != null) {
+                        orderDetail.setStatus(OrderStatusEnum.DELIVERYMAN_CONFIRMED);
+                        orderDetail.setDeliverymanId(orderMessageDTO.getDeliverymanId());
+                        orderDetailDao.update(orderDetail);
+                        // 将消息发送给结算微服务
+                        try (
+                                Connection connection = connectionFactory.newConnection();
+                                Channel channel = connection.createChannel();
+                        ) {
+                            String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                            channel.basicPublish(
+                                    "exchange.order.settlement",
+                                    "key.settlement",
+                                    null,
+                                    messageToSend.getBytes()
+                            );
+                        }
+                    } else {
+                        orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
+                        orderDetailDao.update(orderDetail);
+                    }
                     break;
                 case DELIVERYMAN_CONFIRMED:
                     break;
