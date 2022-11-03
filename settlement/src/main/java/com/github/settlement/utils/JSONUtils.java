@@ -1,4 +1,4 @@
-package com.github.deliveryman.utils;
+package com.github.settlement.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
