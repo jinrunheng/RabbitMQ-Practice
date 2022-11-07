@@ -1,5 +1,6 @@
 package com.github.settlement.service;
 
+import com.github.settlement.dao.ISettlementDao;
 import com.github.settlement.dto.OrderMessageDTO;
 import com.github.settlement.entity.Settlement;
 import com.github.settlement.enummeration.SettlementStatus;
@@ -25,6 +26,9 @@ public class OrderMessageService {
     @Autowired
     private SettlementService settlementService;
 
+    @Autowired
+    private ISettlementDao settlementDao;
+
     @Async
     public void handleMessage() {
         ConnectionFactory connectionFactory = new ConnectionFactory();
@@ -34,7 +38,7 @@ public class OrderMessageService {
                 Channel channel = connection.createChannel()
         ) {
             channel.exchangeDeclare(
-                    "exchange.order.settlement",
+                    "exchange.settlement.order",
                     BuiltinExchangeType.FANOUT,
                     true,
                     false,
@@ -53,6 +57,15 @@ public class OrderMessageService {
                     "queue.settlement",
                     "exchange.order.settlement",
                     "key.settlement"
+            );
+
+            channel.basicConsume(
+                    "queue.settlement",
+                    true,
+                    deliverCallback,
+                    consumerTag -> {
+
+                    }
             );
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -76,6 +89,25 @@ public class OrderMessageService {
                     .transactionId(transactionId)
                     .status(SettlementStatus.SUCCESS)
                     .build();
+
+            settlementDao.insert(settlement);
+
+
+            try (
+                    Connection connection = connectionFactory.newConnection();
+                    Channel channel = connection.createChannel();
+            ) {
+                String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                channel.basicPublish(
+                        "exchange.settlement.order",
+                        "key.order",
+                        null,
+                        messageToSend.getBytes()
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

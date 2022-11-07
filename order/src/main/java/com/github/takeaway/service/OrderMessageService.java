@@ -55,7 +55,7 @@ public class OrderMessageService {
             // 声明结算的 Exchange
             channel.exchangeDeclare("exchange.order.settlement", BuiltinExchangeType.FANOUT, true, false, null);
             // Queue 与 Exchange 绑定
-            channel.queueBind("queue.order", "exchange.order.settlement", "key.order");
+            channel.queueBind("queue.order", "exchange.settlement.order", "key.order");
 
             // 注册消费方法
             channel.basicConsume("queue.order", true, deliverCallback, consumerTag -> {
