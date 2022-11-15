@@ -9,6 +9,7 @@ import com.github.order.vo.OrderCreateVO;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -21,6 +22,7 @@ import java.util.Date;
  * 处理用户关于订单的业务请求
  */
 @Service
+@Slf4j
 public class OrderService {
 
     @Resource
@@ -58,7 +60,8 @@ public class OrderService {
         try (Connection connection = connectionFactory.newConnection();
              Channel channel = connection.createChannel()) {
             String message = JSONUtils.objectToJson(orderMessageDTO);
-
+            // 消息确认机制开启
+            channel.confirmSelect();
             // s : exchange
             // s1 : routing key
             channel.basicPublish(
@@ -67,6 +70,13 @@ public class OrderService {
                     null,
                     message.getBytes()
             );
+
+            log.info("message send");
+            if (channel.waitForConfirms()) {
+                log.info("RabbitMQ confirm success");
+            } else {
+                log.error("RabbitMQ confirm failed");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -218,3 +218,35 @@ mvn flyway:clean flyway:migrate
 Message 中的 Routing Key 如果和 Binding Key 一致，那么 Direct Exchange 则将 Message 发送到对应的 Queue 中
 
 ![](https://files.mdnice.com/user/19026/4c1a5a6c-2a4e-4690-ba0b-de2adb0312aa.png)
+
+## 四
+#### 如何保证消息的可靠性
+- 发送方
+    - 需要使用 RabbitMQ 发送端确认机制，确认消息成功发送到 RabbitMQ 并被处理
+    - 需要使用 RabbitMQ 消息返回机制，若没发现目标队列，中间件会通知发送方
+- 消费方
+    - 需要使用 RabbitMQ 消息端确认机制，确认消息没有发生处理异常
+    - 需要使用 RabbitMQ 消费端限流机制，限制消息推送速度，保障接收端服务稳定    
+- RabbitMQ 自身
+    - 大量堆积的消息会给 RabbitMQ 产生很大的压力，需要使用 RabbitMQ 消息过期的时间，以防止消息的大量堆积
+    - 消息过期后如果直接被丢弃，无法对系统运行异常发出警报，需要使用 RabbitMQ 死信队列，收集过期消息，以提供分析
+#### 发送端确认机制
+发送端确认机制的目的就是为了确认消息是否有真的发送出去。
+##### 什么是发送端确认机制
+- 消息发送后，若中间件收到消息，会给发送端一个应答
+- 生产者接收应答，用来确认这条消息是否正常发送到中间件
+##### 三种确认机制
+- 单条同步确认
+- 多条同步确认
+- 异步确认
+##### 单条同步确认的实现方法
+- 配置 channel，开启确认模式：`channel.confirmSelect()`
+- 每发送一条消息，调用 `channel.waitForConfirms()` 方法，等待确认
+##### 多条同步确认机制的实现方法
+- 配置 channel，开启确认模式：`channel.confirmSelect()`
+- 发送多条消息后，调用 `channel.waitForConfirms()` 方法，等待确认
+##### 异步确认机制的实现方法
+- 配置 channel，开启确认模式：`channel.confirmSelect()`
+- 在 channel 上添加监听：addConfirmListener，发送消息后，会回调此方法，通知是否发送成功
+- 异步确认有可能是单条，也有可能是多条，取决于 MQ 
+     
