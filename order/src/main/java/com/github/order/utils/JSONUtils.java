@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @Author Dooby Kim
  * @Date 2022/10/30 4:49 下午
  * @Version 1.0
- * 基于 fastjson2 的，实现 JSON 字符串与对象之间的序列化与反序列化工具类
+ * 基于 Jackson 实现的 JSON 字符串与对象之间的序列化与反序列化工具类
  */
 public class JSONUtils {
 

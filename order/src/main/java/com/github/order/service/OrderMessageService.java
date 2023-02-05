@@ -27,7 +27,7 @@ public class OrderMessageService {
     private OrderDetailMapper orderDetailMapper;
 
     /**
-     * 声明消息队列，交换机，绑定，消息的处理，为异步线程，使用 @Async 注解
+     * 声明消息队列，交换机，绑定，消息的处理；异步线程，使用 @Async 注解
      */
     @Async
     public void handleMessage() {
@@ -39,18 +39,40 @@ public class OrderMessageService {
                 Channel channel = connection.createChannel()
         ) {
 
-            // 声明 Queue
-            channel.queueDeclare("queue.order", true, false, false, null);
+            // 声明队列 Queue
+            channel.queueDeclare("queue.order",
+                    true,
+                    false,
+                    false,
+                    null);
 
-            // 声明商家的 Exchange
-            channel.exchangeDeclare("exchange.order.restaurant", BuiltinExchangeType.DIRECT, true, false, null);
-            // Queue 与 Exchange 绑定
-            channel.queueBind("queue.order", "exchange.order.restaurant", "key.order");
+            /*-------------------- restaurant --------------------*/
+            // 声明订单与商家微服务使用的 Exchange
+            channel.exchangeDeclare("exchange.order.restaurant",
+                    BuiltinExchangeType.DIRECT,
+                    true,
+                    false,
+                    null);
 
-            // 声明骑手的 Exchange
-            channel.exchangeDeclare("exchange.order.deliveryman", BuiltinExchangeType.DIRECT, true, false, null);
-            // Queue 与 Exchange 绑定
-            channel.queueBind("queue.order", "exchange.order.deliveryman", "key.order");
+            // 将 exchange.order.restaurant 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+            channel.queueBind("queue.order",
+                    "exchange.order.restaurant",
+                    "key.order");
+            /*-----------------------------------------------------*/
+
+            /*-------------------- deliveryman --------------------*/
+            // 声明订单与骑手微服务使用的 Exchange
+            channel.exchangeDeclare("exchange.order.deliveryman",
+                    BuiltinExchangeType.DIRECT,
+                    true,
+                    false,
+                    null);
+            // 将 exchange.order.deliveryman 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+            channel.queueBind("queue.order",
+                    "exchange.order.deliveryman",
+                    "key.order");
+            /*-----------------------------------------------------*/
+
 
             // 声明结算的 Exchange
             channel.exchangeDeclare("exchange.order.settlement", BuiltinExchangeType.FANOUT, true, false, null);
@@ -72,12 +94,12 @@ public class OrderMessageService {
                     "key.order"
             );
 
-            // 注册消费方法
+            // 注册消费回调方法
             channel.basicConsume("queue.order", true, deliverCallback, consumerTag -> {
             });
 
             while (true) {
-                Thread.sleep(10000);
+                Thread.sleep(1000000);
             }
 
         } catch (Exception e) {
@@ -86,7 +108,7 @@ public class OrderMessageService {
 
     }
 
-    // 消费者消费的回调方法
+    // 消费者收到消息并消费的回调方法
     DeliverCallback deliverCallback = (this::handle);
 
     private void handle(String consumerTag, Delivery message) {
@@ -99,24 +121,29 @@ public class OrderMessageService {
             // 将消息体反序列化为 DTO
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msg, OrderMessageDTO.class);
             // 从数据库中读取订单
+            assert orderMessageDTO != null;
             OrderDetail orderDetail = orderDetailMapper.queryOrder(orderMessageDTO.getOrderId());
 
             // 判断订单状态
             switch (orderDetail.getStatus()) {
-
+                /*------------------ 订单为创建中状态 ------------------*/
                 case ORDER_CREATING:
-                    // 订单为创建中状态
-                    // 如果商家已确认，且价格不为空，则将订单状态设置为商家已确认,并设置价格
-                    if (orderMessageDTO.getConfirmed() && orderMessageDTO.getPrice() != null) {
+                    // 如果订单状态为创建中：
+                    // 首先判断接收的消息 DTO 中的状态是否为商家已确认，且价格设置不为空，如果是，则更新 PO（entity） 的订单信息到数据库中
+                    // 接着，向骑手微服务发送消息
+                    // 如果判断失败，则更新订单状态为失败
+                    if (orderMessageDTO.getOrderStatus().equals(OrderStatusEnum.RESTAURANT_CONFIRMED)
+                            && orderMessageDTO.getPrice() != null) {
                         orderDetail.setStatus(OrderStatusEnum.RESTAURANT_CONFIRMED);
                         orderDetail.setPrice(orderMessageDTO.getPrice());
                         orderDetailMapper.update(orderDetail);
-                        // 接下来向骑手微服务发送消息
+                        // 向骑手微服务发送消息
                         try (
                                 Connection connection = connectionFactory.newConnection();
                                 Channel channel = connection.createChannel()
                         ) {
                             String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                            assert messageToSend != null;
                             channel.basicPublish("exchange.order.deliveryman",
                                     "key.deliveryman",
                                     null,

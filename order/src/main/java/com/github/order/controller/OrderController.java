@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 
 /**
  * @Author Dooby Kim
@@ -23,9 +22,9 @@ public class OrderController {
     private OrderService orderService;
 
     @PostMapping("/orders")
-    public void createOrder(@RequestBody OrderCreateVO orderCreateVO) throws IOException {
+    public void createOrder(@RequestBody OrderCreateVO orderCreateVO) {
 
-        log.info("createOrder : orderCreateVO : {}", orderCreateVO);
+        log.info("createOrder : {}", orderCreateVO);
         orderService.createOrder(orderCreateVO);
     }
 }

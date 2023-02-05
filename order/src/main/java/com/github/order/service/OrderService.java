@@ -16,10 +16,11 @@ import javax.annotation.Resource;
 import java.util.Date;
 
 /**
+ * 处理用户关于订单的业务请求
+ *
  * @Author Dooby Kim
  * @Date 2022/10/29 9:46 下午
  * @Version 1.0
- * 处理用户关于订单的业务请求
  */
 @Service
 @Slf4j
@@ -31,7 +32,6 @@ public class OrderService {
     /**
      * 创建订单
      * <p>
-     * 逻辑流程：
      * 1. 创建订单，将订单持久化到数据库
      * 2. 向商家微服务发送消息
      *
@@ -46,6 +46,7 @@ public class OrderService {
                 .date(new Date())
                 .build();
 
+        // 持久化保存到数据库
         orderDetailMapper.insert(orderDetail);
 
         OrderMessageDTO orderMessageDTO = OrderMessageDTO.builder()
@@ -62,8 +63,8 @@ public class OrderService {
             String message = JSONUtils.objectToJson(orderMessageDTO);
             // 消息确认机制开启
             channel.confirmSelect();
-            // s : exchange
-            // s1 : routing key
+            // 发送消息
+            assert message != null;
             channel.basicPublish(
                     "exchange.order.restaurant",
                     "key.restaurant",
