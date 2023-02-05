@@ -94,9 +94,12 @@ public class OrderMessageService {
                     "key.order"
             );
 
-            // 注册消费回调方法
-            channel.basicConsume("queue.order", true, deliverCallback, consumerTag -> {
-            });
+            // 监听，消费的回调方法
+            channel.basicConsume("queue.order",
+                    true,
+                    deliverCallback,
+                    consumerTag -> {
+                    });
 
             while (true) {
                 Thread.sleep(1000000);
@@ -129,10 +132,10 @@ public class OrderMessageService {
                 /*------------------ 订单为创建中状态 ------------------*/
                 case ORDER_CREATING:
                     // 如果订单状态为创建中：
-                    // 首先判断接收的消息 DTO 中的状态是否为商家已确认，且价格设置不为空，如果是，则更新 PO（entity） 的订单信息到数据库中
+                    // 首先判断接收的消息 DTO 中的状态是已确认，且价格设置不为空，如果是，则更新 PO（entity） 的订单信息状态为商户已确认并设置价格后持久化到数据库中
                     // 接着，向骑手微服务发送消息
                     // 如果判断失败，则更新订单状态为失败
-                    if (orderMessageDTO.getOrderStatus().equals(OrderStatusEnum.RESTAURANT_CONFIRMED)
+                    if (orderMessageDTO.getConfirmed()
                             && orderMessageDTO.getPrice() != null) {
                         orderDetail.setStatus(OrderStatusEnum.RESTAURANT_CONFIRMED);
                         orderDetail.setPrice(orderMessageDTO.getPrice());

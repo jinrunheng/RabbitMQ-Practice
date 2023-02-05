@@ -6,11 +6,11 @@ import lombok.*;
 import java.math.BigDecimal;
 
 /**
+ * 订单 DTO，为传递的消息对象
+ *
  * @Author Dooby Kim
  * @Date 2022/10/29 8:24 下午
  * @Version 1.0
- * <p>
- * 订单 DTO；DTO 为 Data Transfer Object，是和数据库交互的对象
  */
 @Data
 @ToString

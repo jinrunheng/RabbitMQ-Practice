@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
+ * 产品 PO
+ *
  * @Author Dooby Kim
  * @Date 2022/10/31 9:44 下午
  * @Version 1.0

@@ -6,6 +6,8 @@ import lombok.*;
 import java.util.Date;
 
 /**
+ * 商户 PO
+ *
  * @Author Dooby Kim
  * @Date 2022/10/31 9:47 下午
  * @Version 1.0

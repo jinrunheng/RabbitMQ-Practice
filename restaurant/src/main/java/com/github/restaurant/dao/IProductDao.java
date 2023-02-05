@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 @Mapper
 @Repository
 public interface IProductDao {
+    
     @Select("SELECT id,name,price,restaurant_id restaurantId,status,date FROM product WHERE id = #{id}")
     Product queryProduct(Integer productId);
 }

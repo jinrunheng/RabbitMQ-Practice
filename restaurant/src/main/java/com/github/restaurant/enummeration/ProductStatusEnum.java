@@ -1,6 +1,8 @@
 package com.github.restaurant.enummeration;
 
 /**
+ * 产品状态枚举类
+ *
  * @Author Dooby Kim
  * @Date 2022/10/31 9:33 下午
  * @Version 1.0
