@@ -1,9 +1,9 @@
 package com.github.order.service;
 
-import com.github.order.dao.IOrderDetailDao;
 import com.github.order.dto.OrderMessageDTO;
 import com.github.order.entity.OrderDetail;
 import com.github.order.enummeration.OrderStatusEnum;
+import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.github.order.vo.OrderCreateVO;
 import com.rabbitmq.client.Channel;
@@ -26,7 +26,7 @@ import java.util.Date;
 public class OrderService {
 
     @Resource
-    private IOrderDetailDao orderDetailDao;
+    private OrderDetailMapper orderDetailMapper;
 
     /**
      * 创建订单
@@ -46,7 +46,7 @@ public class OrderService {
                 .date(new Date())
                 .build();
 
-        orderDetailDao.insert(orderDetail);
+        orderDetailMapper.insert(orderDetail);
 
         OrderMessageDTO orderMessageDTO = OrderMessageDTO.builder()
                 .orderId(orderDetail.getId())

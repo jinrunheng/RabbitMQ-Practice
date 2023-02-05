@@ -1,9 +1,9 @@
 package com.github.order.service;
 
-import com.github.order.dao.IOrderDetailDao;
 import com.github.order.dto.OrderMessageDTO;
 import com.github.order.entity.OrderDetail;
 import com.github.order.enummeration.OrderStatusEnum;
+import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.rabbitmq.client.*;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import javax.annotation.Resource;
 public class OrderMessageService {
 
     @Resource
-    private IOrderDetailDao orderDetailDao;
+    private OrderDetailMapper orderDetailMapper;
 
     /**
      * 声明消息队列，交换机，绑定，消息的处理，为异步线程，使用 @Async 注解
@@ -99,7 +99,7 @@ public class OrderMessageService {
             // 将消息体反序列化为 DTO
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msg, OrderMessageDTO.class);
             // 从数据库中读取订单
-            OrderDetail orderDetail = orderDetailDao.queryOrder(orderMessageDTO.getOrderId());
+            OrderDetail orderDetail = orderDetailMapper.queryOrder(orderMessageDTO.getOrderId());
 
             // 判断订单状态
             switch (orderDetail.getStatus()) {
@@ -110,7 +110,7 @@ public class OrderMessageService {
                     if (orderMessageDTO.getConfirmed() && orderMessageDTO.getPrice() != null) {
                         orderDetail.setStatus(OrderStatusEnum.RESTAURANT_CONFIRMED);
                         orderDetail.setPrice(orderMessageDTO.getPrice());
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                         // 接下来向骑手微服务发送消息
                         try (
                                 Connection connection = connectionFactory.newConnection();
@@ -125,14 +125,14 @@ public class OrderMessageService {
                     } else {
                         // 否则订单失败
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                     }
                     break;
                 case RESTAURANT_CONFIRMED:
                     if (orderMessageDTO.getDeliverymanId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.DELIVERYMAN_CONFIRMED);
                         orderDetail.setDeliverymanId(orderMessageDTO.getDeliverymanId());
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                         // 将消息发送给结算微服务
                         try (
                                 Connection connection = connectionFactory.newConnection();
@@ -148,14 +148,14 @@ public class OrderMessageService {
                         }
                     } else {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                     }
                     break;
                 case DELIVERYMAN_CONFIRMED:
                     if (orderMessageDTO.getSettlementId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.SETTLEMENT_CONFIRMED);
                         orderDetail.setSettlementId(orderMessageDTO.getSettlementId());
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                         // 给积分微服务发送消息
                         try (Connection connection = connectionFactory.newConnection();
                              Channel channel = connection.createChannel()) {
@@ -172,7 +172,7 @@ public class OrderMessageService {
                     } else {
                         // 如果返回订单消息体中 settleId 为空，则代表订单失败
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                     }
 
                     break;
@@ -181,10 +181,10 @@ public class OrderMessageService {
                     if (orderMessageDTO.getRewardId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_CREATED);
                         orderDetail.setRewardId(orderMessageDTO.getRewardId());
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                     } else {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
-                        orderDetailDao.update(orderDetail);
+                        orderDetailMapper.update(orderDetail);
                     }
                 case ORDER_CREATED:
                 case ORDER_FAILED:

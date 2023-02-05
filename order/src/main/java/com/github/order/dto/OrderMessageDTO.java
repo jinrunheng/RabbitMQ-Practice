@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  * @Date 2022/10/29 8:24 下午
  * @Version 1.0
  * <p>
- * 订单 DTO；DTO 为 Data Transfer Object，是和数据库交互的对象
+ * 订单 DTO；DTO 为 Data Transfer Object，数据传输对象，本项目中，DTO 为消息体中用于传输的数据
  */
 @Data
 @ToString
@@ -53,7 +53,7 @@ public class OrderMessageDTO {
     private Integer settlementId;
 
     /**
-     * 积分结算 ID
+     * 积分 ID
      */
     private Integer rewardId;
 
@@ -63,7 +63,7 @@ public class OrderMessageDTO {
     private Integer rewardAmount;
 
     /**
-     * 确认
+     * 是否确认
      */
     private Boolean confirmed;
 

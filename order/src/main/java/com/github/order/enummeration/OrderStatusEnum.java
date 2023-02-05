@@ -1,6 +1,8 @@
 package com.github.order.enummeration;
 
 /**
+ * 订单状态枚举类
+ *
  * @Author Dooby Kim
  * @Date 2022/10/29 8:30 下午
  * @Version 1.0
