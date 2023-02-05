@@ -34,6 +34,6 @@ CREATE TABLE `restaurant`  (
 -- ----------------------------
 -- Records of restaurant
 -- ----------------------------
-INSERT INTO `restaurant` VALUES (1, 'qeqwe', '2weqe', 'OPEN', 1, '2020-05-06 19:19:39');
+INSERT INTO `restaurant` VALUES (1, 'KFC', '深圳市华强北店', 'OPEN', 1, '2020-05-06 19:19:39');
 
 SET FOREIGN_KEY_CHECKS = 1;
