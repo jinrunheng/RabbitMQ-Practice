@@ -95,6 +95,10 @@ rabbitmqctl set_user_tags admin administrator #设置用户最高操作权限
 ```bash
 docker run --name rabbit -e MYSQL_ROOT_PASSWORD=123 -e MYSQL_DATABASE=rabbit -e TZ=Asia/Shanghai -p 3306:3306 -d mysql
 ```
+为了保证数据库查询能正常显示中文数据，进入到 mysql 服务器后，我们需要执行：
+```sql
+set names utf8mb4;
+```
 进入到项目的 db 目录下，执行命令：
 ```bash
 mvn flyway:clean flyway:migrate
