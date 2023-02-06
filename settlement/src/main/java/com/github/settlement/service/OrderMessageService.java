@@ -102,7 +102,7 @@ public class OrderMessageService {
                     .build();
 
             settlementDao.insert(settlement);
-
+            orderMessageDTO.setSettlementId(settlement.getId());
             // 向订单微服务发送消息
             try (
                     Connection connection = connectionFactory.newConnection();

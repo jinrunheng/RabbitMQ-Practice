@@ -86,7 +86,8 @@ public class OrderMessageService {
                     "key.order");
             /*-----------------------------------------------------*/
 
-            // 声明积分的 Exchange
+            /*-------------------- reward --------------------*/
+            // 声明订单与积分微服务使用的 Exchange
             channel.exchangeDeclare(
                     "exchange.order.reward",
                     BuiltinExchangeType.TOPIC,
@@ -100,6 +101,7 @@ public class OrderMessageService {
                     "exchange.order.reward",
                     "key.order"
             );
+            /*-------------------- reward --------------------*/
 
             // 监听，消费的回调方法
             channel.basicConsume("queue.order",
@@ -169,7 +171,7 @@ public class OrderMessageService {
                 case RESTAURANT_CONFIRMED:
                     // 如果订单状态为商家已确认状态：
                     // 根据项目流程图，说明订单微服务已经收到了骑手微服务发送的消息，接下来就要向结算微服务发送消息
-                    // 首先判读 DTO 中骑手 ID 是否为空，如果为空则将 DTO 的订单状态设置为失败
+                    // 首先判读 DTO 中骑手 ID 是否为空，如果为空则将 PO 的订单状态设置为失败
                     // 如果不为空，则将 PO 中的订单状态设置为骑手已确认，并设置骑手ID，将更新的数据持久化到数据库
                     // 并向结算微服务发送消息
                     if (orderMessageDTO.getDeliverymanId() != null) {
@@ -196,7 +198,13 @@ public class OrderMessageService {
                         orderDetailMapper.update(orderDetail);
                     }
                     break;
+                /*------------------ 订单为骑手已确认状态 ------------------*/
                 case DELIVERYMAN_CONFIRMED:
+                    // 如果订单状态为骑手已确认状态：
+                    // 根据项目流程图，说明订单微服务已经收到了结算微服务发送的消息，接下来就要向积分微服务发送消息
+                    // 首先判读 DTO 中结算 ID 是否为空，如果为空则将 PO 的订单状态设置为失败
+                    // 如果不为空，则将 PO 中的订单状态设置为结算已确认，并设置结算ID，将更新的数据持久化到数据库
+                    // 并向积分微服务发送消息
                     if (orderMessageDTO.getSettlementId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.SETTLEMENT_CONFIRMED);
                         orderDetail.setSettlementId(orderMessageDTO.getSettlementId());
@@ -205,32 +213,34 @@ public class OrderMessageService {
                         try (Connection connection = connectionFactory.newConnection();
                              Channel channel = connection.createChannel()) {
                             String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                            assert messageToSend != null;
                             channel.basicPublish(
                                     "exchange.order.reward",
                                     "key.reward",
                                     null,
                                     messageToSend.getBytes()
                             );
-                        } catch (Exception e) {
-
                         }
                     } else {
                         // 如果返回订单消息体中 settleId 为空，则代表订单失败
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
                         orderDetailMapper.update(orderDetail);
                     }
-
                     break;
+                /*------------------ 订单为结算已确认状态 ------------------*/
+                // 如果订单状态为结算已确认状态：
+                // 根据项目流程图，说明订单微服务已经收到了积分微服务发送的消息
+                // 首先判读 DTO 中积分 ID 是否为空，如果为空则将 PO 的订单状态设置为失败
+                // 如果不为空，则将 PO 中的订单状态设置为订单创建成功，并将更新的数据持久化到数据库
                 case SETTLEMENT_CONFIRMED:
 
                     if (orderMessageDTO.getRewardId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_CREATED);
                         orderDetail.setRewardId(orderMessageDTO.getRewardId());
-                        orderDetailMapper.update(orderDetail);
                     } else {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
-                        orderDetailMapper.update(orderDetail);
                     }
+                    orderDetailMapper.update(orderDetail);
                 case ORDER_CREATED:
                 case ORDER_FAILED:
                     break;

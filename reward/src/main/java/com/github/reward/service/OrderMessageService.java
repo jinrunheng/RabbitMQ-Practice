@@ -70,13 +70,16 @@ public class OrderMessageService {
         }
     }
 
-    DeliverCallback deliverCallback = (consumerTag, message) -> {
-        String messageBody = new String(message.getBody());
+    DeliverCallback deliverCallback = this::handle;
+
+    private void handle(String consumerTag, Delivery message) {
+
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
         try {
+            String messageBody = new String(message.getBody());
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(messageBody, OrderMessageDTO.class);
-
+            assert orderMessageDTO != null;
             Reward reward = Reward.builder().
                     orderId(orderMessageDTO.getOrderId())
                     .status(RewardStatus.SUCCESS)
@@ -85,6 +88,7 @@ public class OrderMessageService {
                     .build();
 
             rewardDao.insert(reward);
+            orderMessageDTO.setRewardId(reward.getId());
 
             try (
                     Connection connection = connectionFactory.newConnection();
@@ -92,6 +96,7 @@ public class OrderMessageService {
             ) {
                 String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
                 // 向订单微服务发送消息
+                assert messageToSend != null;
                 channel.basicPublish(
                         "exchange.order.reward",
                         "key.order",
@@ -103,5 +108,5 @@ public class OrderMessageService {
             log.error(e.getMessage(), e);
         }
 
-    };
+    }
 }
