@@ -135,4 +135,8 @@ mvn flyway:clean flyway:migrate
 - 配置 channel，开启确认模式：`channel.confirmSelect()`
 - 在 channel 上添加监听：addConfirmListener，发送消息后，会回调此方法，通知是否发送成功
 - 异步确认有可能是单条，也有可能是多条，取决于 MQ 
-     
+## Bug report
+数据库字符集不正确的解决方法：
+```sql
+set names utf8mb4;
+```     

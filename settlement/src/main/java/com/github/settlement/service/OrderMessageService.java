@@ -37,6 +37,7 @@ public class OrderMessageService {
                 Connection connection = connectionFactory.newConnection();
                 Channel channel = connection.createChannel()
         ) {
+            // 声明订单与结算微服务使用的 Exchange
             channel.exchangeDeclare(
                     "exchange.settlement.order",
                     BuiltinExchangeType.FANOUT,
@@ -45,6 +46,7 @@ public class OrderMessageService {
                     null
             );
 
+            // 声明队列
             channel.queueDeclare(
                     "queue.settlement",
                     true,
@@ -53,9 +55,10 @@ public class OrderMessageService {
                     null
             );
 
+            // Queue 与 Exchange 绑定
             channel.queueBind(
                     "queue.settlement",
-                    "exchange.order.settlement",
+                    "exchange.settlement.order",
                     "key.settlement"
             );
 
@@ -64,23 +67,31 @@ public class OrderMessageService {
                     true,
                     deliverCallback,
                     consumerTag -> {
-
                     }
             );
+
+            while (true) {
+                Thread.sleep(1000000);
+            }
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
     }
 
-    DeliverCallback deliverCallback = ((consumerTag, message) -> {
-        String messageBody = new String(message.getBody());
+    DeliverCallback deliverCallback = (this::handle);
+
+    private void handle(String consumerTag, Delivery message) {
+
 
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
 
         try {
+            String messageBody = new String(message.getBody());
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(messageBody, OrderMessageDTO.class);
 
+            assert orderMessageDTO != null;
             Integer transactionId = settlementService.settlement(orderMessageDTO.getAccountId(), orderMessageDTO.getPrice());
             Settlement settlement = Settlement.builder()
                     .amount(orderMessageDTO.getPrice())
@@ -92,14 +103,15 @@ public class OrderMessageService {
 
             settlementDao.insert(settlement);
 
-
+            // 向订单微服务发送消息
             try (
                     Connection connection = connectionFactory.newConnection();
-                    Channel channel = connection.createChannel();
+                    Channel channel = connection.createChannel()
             ) {
                 String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                assert messageToSend != null;
                 channel.basicPublish(
-                        "exchange.settlement.order",
+                        "exchange.order.settlement",
                         "key.order",
                         null,
                         messageToSend.getBytes()
@@ -111,5 +123,5 @@ public class OrderMessageService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-    });
+    }
 }

@@ -73,11 +73,18 @@ public class OrderMessageService {
                     "key.order");
             /*-----------------------------------------------------*/
 
+            /*-------------------- settlement --------------------*/
+            // 声明订单与结算微服务使用的 Exchange
+            channel.exchangeDeclare("exchange.order.settlement",
+                    BuiltinExchangeType.FANOUT,
+                    true,
+                    false,
+                    null);
 
-            // 声明结算的 Exchange
-            channel.exchangeDeclare("exchange.order.settlement", BuiltinExchangeType.FANOUT, true, false, null);
-            // Queue 与 Exchange 绑定
-            channel.queueBind("queue.order", "exchange.settlement.order", "key.order");
+            channel.queueBind("queue.order",
+                    "exchange.order.settlement",
+                    "key.order");
+            /*-----------------------------------------------------*/
 
             // 声明积分的 Exchange
             channel.exchangeDeclare(
@@ -158,7 +165,13 @@ public class OrderMessageService {
                         orderDetailMapper.update(orderDetail);
                     }
                     break;
+                /*------------------ 订单为商家已确认状态 ------------------*/
                 case RESTAURANT_CONFIRMED:
+                    // 如果订单状态为商家已确认状态：
+                    // 根据项目流程图，说明订单微服务已经收到了骑手微服务发送的消息，接下来就要向结算微服务发送消息
+                    // 首先判读 DTO 中骑手 ID 是否为空，如果为空则将 DTO 的订单状态设置为失败
+                    // 如果不为空，则将 PO 中的订单状态设置为骑手已确认，并设置骑手ID，将更新的数据持久化到数据库
+                    // 并向结算微服务发送消息
                     if (orderMessageDTO.getDeliverymanId() != null) {
                         orderDetail.setStatus(OrderStatusEnum.DELIVERYMAN_CONFIRMED);
                         orderDetail.setDeliverymanId(orderMessageDTO.getDeliverymanId());
@@ -169,8 +182,10 @@ public class OrderMessageService {
                                 Channel channel = connection.createChannel();
                         ) {
                             String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                            assert messageToSend != null;
+                            // 因为 exchange.order.settlement 交换机 为 fanout （广播）模式，所以 routingKey 是什么无关紧要
                             channel.basicPublish(
-                                    "exchange.order.settlement",
+                                    "exchange.settlement.order",
                                     "key.settlement",
                                     null,
                                     messageToSend.getBytes()

@@ -34,7 +34,7 @@ public class OrderMessageService {
                 Connection connection = connectionFactory.newConnection();
                 Channel channel = connection.createChannel();
         ) {
-            // 声明 Exchange
+            // 声明订单与骑手微服务使用的 Exchange
             channel.exchangeDeclare(
                     "exchange.order.deliveryman",
                     BuiltinExchangeType.DIRECT,
@@ -43,7 +43,7 @@ public class OrderMessageService {
                     null
             );
 
-            // 声明 Queue
+            // 声明队列
             channel.queueDeclare(
                     "queue.deliveryman",
                     true,
@@ -52,14 +52,14 @@ public class OrderMessageService {
                     null
             );
 
-            // 声明 Exchange 和 Queue 的绑定关系
+            // Queue 与 Exchange 绑定
             channel.queueBind(
                     "queue.deliveryman",
                     "exchange.order.deliveryman",
                     "key.deliveryman"
             );
 
-            // 接收消息
+            // 监听，消费的回调方法
             channel.basicConsume(
                     "queue.deliveryman",
                     true,
@@ -77,21 +77,32 @@ public class OrderMessageService {
         }
     }
 
-    DeliverCallback deliverCallback = ((consumerTag, message) -> {
-        String msgBody = new String(message.getBody());
+    // 消费者收到消息并消费的回调方法
+    DeliverCallback deliverCallback = (this::handle);
+
+    private void handle(String consumerTag, Delivery message) {
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
 
         try {
+            String msgBody = new String(message.getBody());
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msgBody, OrderMessageDTO.class);
+            // 查询当前空闲的骑手，并将该订单分配给返回列表的第一个骑手
             List<Deliveryman> deliverymen = deliverymanDao.queryDeliverymanByStatus(DeliverymanStatusEnum.AVAILABLE);
+            // 当前无空闲的骑手时，直接查询所有忙碌的骑手，并将该订单分配给返回列表的第一个骑手
+            if (deliverymen == null || deliverymen.size() <= 0) {
+                deliverymen = deliverymanDao.queryDeliverymanByStatus(DeliverymanStatusEnum.NOT_AVAILABLE);
+            }
+            assert orderMessageDTO != null;
             orderMessageDTO.setDeliverymanId(deliverymen.get(0).getId());
 
+            // 向订单微服务发送消息
             try (
                     Connection connection = connectionFactory.newConnection();
                     Channel channel = connection.createChannel();
             ) {
                 String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                assert messageToSend != null;
                 channel.basicPublish("exchange.order.deliveryman",
                         "key.order",
                         null,
@@ -102,6 +113,5 @@ public class OrderMessageService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-    });
-
+    }
 }
