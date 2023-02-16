@@ -11,10 +11,12 @@ import com.github.restaurant.enummeration.RestaurantStatusEnum;
 import com.github.restaurant.utils.JSONUtils;
 import com.rabbitmq.client.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 
 /**
  * @Author Dooby Kim
@@ -31,15 +33,13 @@ public class OrderMessageService {
     @Resource
     private IRestaurantDao restaurantDao;
 
+    @Autowired
+    private Channel channel;
+
     @Async
     public void handleMessage() {
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost("localhost");
 
-        try (
-                Connection connection = connectionFactory.newConnection();
-                Channel channel = connection.createChannel();
-        ) {
+        try {
             // 声明订单与商家微服务使用的 Exchange
             channel.exchangeDeclare(
                     "exchange.order.restaurant",
@@ -63,9 +63,10 @@ public class OrderMessageService {
                     "key.restaurant"
             );
             // 监听，消费的回调方法
+            // autoAck 设置为 false,关闭消息自动确认
             channel.basicConsume(
                     "queue.restaurant",
-                    true,
+                    false,
                     deliverCallback,
                     consumerTag -> {
                     }
@@ -75,14 +76,14 @@ public class OrderMessageService {
                 Thread.sleep(1000000);
             }
 
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             log.error(e.getMessage(), e);
         }
+
     }
 
     DeliverCallback deliverCallback = ((consumerTag, message) -> {
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost("localhost");
         try {
             String msgBody = new String(message.getBody());
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msgBody, OrderMessageDTO.class);
@@ -100,18 +101,29 @@ public class OrderMessageService {
             }
 
             // 向订单微服务发送消息
-            try (
-                    Connection connection = connectionFactory.newConnection();
-                    Channel channel = connection.createChannel();
-            ) {
-                String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
-                assert messageToSend != null;
-                channel.basicPublish("exchange.order.restaurant",
-                        "key.order",
-                        null,
-                        messageToSend.getBytes()
-                );
-            }
+
+            String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+            assert messageToSend != null;
+
+            // 消息返回机制，开启监听
+            channel.addReturnListener((replyCode, replyText, exchange, routingKey, properties, body) -> {
+                log.info("Message Return");
+                // TODO:说明消息不可达
+            });
+
+            // 消费端手动确认
+            channel.basicAck(message.getEnvelope().getDeliveryTag(), false);
+
+            // mandatory 设置为 true，开启消息返回机制
+            channel.basicPublish("exchange.order.restaurant",
+                    "key.order",
+                    true,
+                    null,
+                    messageToSend.getBytes()
+            );
+
+            Thread.sleep(10000);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
