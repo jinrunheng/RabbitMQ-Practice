@@ -5,18 +5,18 @@ import com.github.restaurant.dao.IRestaurantDao;
 import com.github.restaurant.dto.OrderMessageDTO;
 import com.github.restaurant.entity.Product;
 import com.github.restaurant.entity.Restaurant;
-import com.github.restaurant.enummeration.OrderStatusEnum;
 import com.github.restaurant.enummeration.ProductStatusEnum;
 import com.github.restaurant.enummeration.RestaurantStatusEnum;
 import com.github.restaurant.utils.JSONUtils;
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DeliverCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 
 /**
  * @Author Dooby Kim
@@ -62,6 +62,9 @@ public class OrderMessageService {
                     "exchange.order.restaurant",
                     "key.restaurant"
             );
+            // 消费端限流机制
+            // 同时可以有五条消息被处理
+            channel.basicQos(5);
             // 监听，消费的回调方法
             // autoAck 设置为 false,关闭消息自动确认
             channel.basicConsume(
