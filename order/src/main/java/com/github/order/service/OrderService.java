@@ -6,6 +6,7 @@ import com.github.order.enummeration.OrderStatusEnum;
 import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.github.order.vo.OrderCreateVO;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -65,10 +66,18 @@ public class OrderService {
             channel.confirmSelect();
             // 发送消息
             assert message != null;
+
+            // 设置单条消息 TTL 为 1 min
+            AMQP.BasicProperties properties = new AMQP.BasicProperties()
+                    .builder()
+                    .expiration("60000")
+                    .build();
+
+
             channel.basicPublish(
                     "exchange.order.restaurant",
                     "key.restaurant",
-                    null,
+                    properties,
                     message.getBytes()
             );
 
