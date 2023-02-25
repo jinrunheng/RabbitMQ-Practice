@@ -234,6 +234,34 @@ AMQP 协议中：
 - TTL 应该明显长于服务的平均重启时间
 - 建议 TTL 长于业务高峰期时间
 
+##### 如何转移过期消息？
+
+- 消息被设置了过期时间，过期后会被直接丢弃
+- 直接被丢弃的消息，无法对系统运行异常发出警报
+- 需要使用 RabbitMQ 死信队列，收集过期消息，以供分析
+
+##### 什么是死信队列
+
+- 死信队列指的是：队列被配置了 DLX 属性的队列（Dead-Letter-Exchange）
+- 当一个消息变成死信（Dead Message）后，能重新被发布到另一个 Exchange，这个 Exchange 也是一个普通的交换机
+- 死信被死信交换机路由后，一般进入到一个固定的队列
+
+##### 一条消息变成死信的条件
+
+- 消息被拒绝（reject/nack），并且 requeue = false
+- 消息过期
+- 队列达到了最大长度
+
+##### 死信队列设置方法
+
+1. 设置转发，接收死信的交换机和队列
+    - Exchange:`dlx.exchange`
+    - Queue:`dlx.queue`
+    - RoutingKey:`#`
+2. 在需要设置死信的队列中加入参数
+    - `x-dead-letter-exchange = dlx.exchange`
+
+
 ## Bug report
 数据库字符集不正确的解决方法：
 ```sql

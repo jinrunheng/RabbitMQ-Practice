@@ -17,6 +17,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Author Dooby Kim
@@ -48,13 +50,48 @@ public class OrderMessageService {
                     false,
                     null
             );
+
+            // 声明死信交换机
+            channel.exchangeDeclare(
+                    "exchange.dlx",
+                    BuiltinExchangeType.TOPIC,
+                    true,
+                    false,
+                    null
+            );
+
+            // 声明接收死信的队列，需要和死信队列区别开，死信队列是设置了 x-dead-letter-exchange 属性的队列
+            channel.queueDeclare(
+                    "queue.dlx",
+                    true,
+                    false,
+                    false,
+                    null
+            );
+
+            // 将死信队列与死信交换机进行绑定
+            channel.queueBind(
+                    "queue.dlx",
+                    "exchange.dlx",
+                    "#"
+            );
+
+            // 设置队列 TTL 为 1 min
+            Map<String, Object> args = new HashMap<>(16);
+            args.put("x-message-ttl", "60000");
+            // 设置死信队列
+            args.put("x-dead-letter-exchange", "exchange.dlx");
+            // x-expire 为队列的存活时间，如果在一定的时间内，队列没有接收到消息，队列会被删除；不要加入这样一个参数
+            // args.put("x-expire","60000");
+            // 声明队列 Queue
+
             // 声明队列
             channel.queueDeclare(
                     "queue.restaurant",
                     true,
                     false,
                     false,
-                    null
+                    args
             );
             // Queue 与 Exchange 绑定
             channel.queueBind(

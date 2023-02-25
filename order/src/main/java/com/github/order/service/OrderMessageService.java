@@ -40,17 +40,12 @@ public class OrderMessageService {
                 Connection connection = connectionFactory.newConnection();
                 Channel channel = connection.createChannel()
         ) {
-            // 设置队列 TTL 为 1 min
-            Map<String, Object> args = new HashMap<>(16);
-            args.put("x-message-ttl", "60000");
-            // x-expire 为队列的存活时间，如果在一定的时间内，队列没有接收到消息，队列会被删除；不要加入这样一个参数
-            // args.put("x-expire","60000");
-            // 声明队列 Queue
+
             channel.queueDeclare("queue.order",
                     true,
                     false,
                     false,
-                    args);
+                    null);
 
             /*-------------------- restaurant --------------------*/
             // 声明订单与商家微服务使用的 Exchange
