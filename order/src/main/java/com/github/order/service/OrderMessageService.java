@@ -7,6 +7,7 @@ import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.rabbitmq.client.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -40,69 +41,6 @@ public class OrderMessageService {
                 Connection connection = connectionFactory.newConnection();
                 Channel channel = connection.createChannel()
         ) {
-
-            channel.queueDeclare("queue.order",
-                    true,
-                    false,
-                    false,
-                    null);
-
-            /*-------------------- restaurant --------------------*/
-            // 声明订单与商家微服务使用的 Exchange
-            channel.exchangeDeclare("exchange.order.restaurant",
-                    BuiltinExchangeType.DIRECT,
-                    true,
-                    false,
-                    null);
-
-            // 将 exchange.order.restaurant 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
-            channel.queueBind("queue.order",
-                    "exchange.order.restaurant",
-                    "key.order");
-            /*-----------------------------------------------------*/
-
-            /*-------------------- deliveryman --------------------*/
-            // 声明订单与骑手微服务使用的 Exchange
-            channel.exchangeDeclare("exchange.order.deliveryman",
-                    BuiltinExchangeType.DIRECT,
-                    true,
-                    false,
-                    null);
-            // 将 exchange.order.deliveryman 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
-            channel.queueBind("queue.order",
-                    "exchange.order.deliveryman",
-                    "key.order");
-            /*-----------------------------------------------------*/
-
-            /*-------------------- settlement --------------------*/
-            // 声明订单与结算微服务使用的 Exchange
-            channel.exchangeDeclare("exchange.order.settlement",
-                    BuiltinExchangeType.FANOUT,
-                    true,
-                    false,
-                    null);
-
-            channel.queueBind("queue.order",
-                    "exchange.order.settlement",
-                    "key.order");
-            /*-----------------------------------------------------*/
-
-            /*-------------------- reward --------------------*/
-            // 声明订单与积分微服务使用的 Exchange
-            channel.exchangeDeclare(
-                    "exchange.order.reward",
-                    BuiltinExchangeType.TOPIC,
-                    true,
-                    false,
-                    null
-            );
-            // Queue 与 Exchange 绑定
-            channel.queueBind(
-                    "queue.order",
-                    "exchange.order.reward",
-                    "key.order"
-            );
-            /*-------------------- reward --------------------*/
 
             // 监听，消费的回调方法
             channel.basicConsume("queue.order",

@@ -290,7 +290,24 @@ AMQP 协议中：
 - 可以隐式建立 Connection，Channel
 
 
+### RabbitAdmin 快速配置 RabbitMQ 服务
 
+- 顾名思义，RabbitAdmin 类是用来管理 RabbitMQ 的
+- 创建方法：
+    ```java
+     ConnectionFactory connnectionFactory = new CachingConnectionFactory();
+     RabbitAdmin rabbit = new RabbitAdmin(connectionFactory);
+     ```
+### RabbitAdmin 功能
+
+- declareExchange：创建交换机
+- deleteExchange：删除交换机
+- declareQueue：创建队列
+- deleteQueue：删除队列
+- purgeQueue：清空队列
+- declareBinding：新建绑定关系
+- removeBinding:删除绑定关系
+- getQueueProperties：查询队列属性
 
 ## Bug report
 数据库字符集不正确的解决方法：
