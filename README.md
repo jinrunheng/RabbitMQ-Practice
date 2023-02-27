@@ -5,7 +5,7 @@
 ...
 
 ## RabbitMQ 快速安装与启动
-            
+
 ### Mac 使用 Homebrew 安装 RabbitMQ
 1. `brew update`
 2. `brew install rabbitmq`；mac 默认的下载路径为：`/usr/local/Cellar/rabbitmq/版本号/`
@@ -261,9 +261,39 @@ AMQP 协议中：
 2. 在需要设置死信的队列中加入参数
     - `x-dead-letter-exchange = dlx.exchange`
 
+## RabbitMQ 与 Spring Boot 适配
+
+### Spring AMQP 特性
+
+- 异步消息监听容器
+- 原声提供 RabbitTemplate 方便收发消息
+- 原生提供 RabbitAdmin 方便队列，交换机声明
+- Spring Boot Config 原生地支持 RabbitMQ
+
+### 异步消息监听容器
+
+- 原始实现：自己实现线程池，回调方法，并注册回调方法
+- Spring Boot：自动实现可配置的线程池，并自动注册回调方法，只需实现回调方法
+
+### RabbitTemplate
+
+- 相比于 basicPublis，功能要更加强大，能自动实现消息转换等功能
+
+### RabbitAdmin
+
+- 声明式提供队列，交换机，绑定关系的注册方法
+- 甚至不需要显示地注册
+
+### Spring Boot Config
+
+- 充分地发挥 Spring Boot 约定大于配置的特性
+- 可以隐式建立 Connection，Channel
+
+
+
 
 ## Bug report
 数据库字符集不正确的解决方法：
 ```sql
 set names utf8mb4;
-```     
+```
