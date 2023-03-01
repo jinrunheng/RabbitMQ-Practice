@@ -7,13 +7,10 @@ import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.rabbitmq.client.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Author Dooby Kim
@@ -29,11 +26,16 @@ public class OrderMessageService {
     @Resource
     private OrderDetailMapper orderDetailMapper;
 
+    public OrderMessageService() {
+        deliverCallback = (this::handle);
+    }
+
     /**
      * 声明消息队列，交换机，绑定，消息的处理；异步线程，使用 @Async 注解
      */
     @Async
     public void handleMessage() {
+
         ConnectionFactory connectionFactory = new ConnectionFactory();
         connectionFactory.setHost("localhost");
 
@@ -60,7 +62,7 @@ public class OrderMessageService {
     }
 
     // 消费者收到消息并消费的回调方法
-    DeliverCallback deliverCallback = (this::handle);
+    DeliverCallback deliverCallback;
 
     private void handle(String consumerTag, Delivery message) {
         String msg = new String(message.getBody());

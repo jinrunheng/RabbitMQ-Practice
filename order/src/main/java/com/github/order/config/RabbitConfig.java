@@ -3,8 +3,10 @@ package com.github.order.config;
 import com.github.order.service.OrderMessageService;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
@@ -22,75 +24,163 @@ public class RabbitConfig {
     private OrderMessageService orderMessageService;
 
     @Autowired
-    @Order(2)
+    @Order(4)
     public void startListenMessage() {
         orderMessageService.handleMessage();
     }
 
-    @Autowired
+
+    /**
+     * 声明队列 queue.order
+     *
+     * @return
+     */
+    @Bean
+    @Order(3)
+    public Queue orderQueue() {
+        return new Queue("queue.order");
+    }
+
+    /*--------------------- restaurant --------------------*/
+
+    /**
+     * 声明订单与商家微服务使用的 Exchange
+     *
+     * @return
+     */
+    @Bean
+    public Exchange orderRestaurantExchange() {
+        return new DirectExchange("exchange.order.restaurant");
+    }
+
+    /**
+     * exchange.order.restaurant 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+     *
+     * @return
+     */
+    @Bean
+    public Binding orderRestaurantBinding() {
+        return new Binding("queue.order",
+                Binding.DestinationType.QUEUE,
+                "exchange.order.restaurant",
+                "key.order",
+                null);
+    }
+
+    /*--------------------- restaurant --------------------*/
+
+    /*--------------------- deliveryman --------------------*/
+
+    /**
+     * 声明订单与骑手微服务使用的 Exchange
+     *
+     * @return
+     */
+    @Bean
+    public Exchange orderDeliverymanExchange() {
+        return new DirectExchange("exchange.order.deliveryman");
+    }
+
+    /**
+     * exchange.order.deliveryman 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+     *
+     * @return
+     */
+    @Bean
+    public Binding orderDeliverymanBinding() {
+        return new Binding("queue.order",
+                Binding.DestinationType.QUEUE,
+                "exchange.order.deliveryman",
+                "key.order",
+                null);
+    }
+
+    /*--------------------- deliveryman --------------------*/
+
+    /*--------------------- settlement --------------------*/
+
+    /**
+     * 声明订单与结算微服务使用的 Exchange
+     *
+     * @return
+     */
+    @Bean
+    public Exchange orderSettlementExchange() {
+        return new FanoutExchange("exchange.order.settlement");
+    }
+
+    /**
+     * exchange.order.settlement 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+     *
+     * @return
+     */
+    @Bean
+    public Binding orderSettlementBinding() {
+        return new Binding("queue.order",
+                Binding.DestinationType.QUEUE,
+                "exchange.order.settlement",
+                "key.order",
+                null);
+    }
+    /*--------------------- settlement --------------------*/
+
+    /*--------------------- reward --------------------*/
+
+    /**
+     * 声明订单与积分微服务使用的 Exchange
+     *
+     * @return
+     */
+    @Bean
+    public Exchange orderRewardExchange() {
+        return new TopicExchange("exchange.order.reward");
+    }
+
+    /**
+     * exchange.order.reward 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
+     *
+     * @return
+     */
+    @Bean
+    public Binding orderRewardBinding() {
+        return new Binding("queue.order",
+                Binding.DestinationType.QUEUE,
+                "exchange.order.reward",
+                "key.order",
+                null);
+    }
+
+    /*--------------------- reward --------------------*/
+
+    /**
+     * 将 ConnectionFactory 交给 Spring 管理
+     *
+     * @return
+     */
+    @Bean
     @Order(1)
-    public void initRabbit() {
+    public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
         connectionFactory.setHost("localhost");
         connectionFactory.setPort(5672);
         connectionFactory.setUsername("guest");
         connectionFactory.setPassword("guest");
-
-        RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
-
-        // 声明队列 queue.order
-        Queue queue = new Queue("queue.order");
-        rabbitAdmin.declareQueue(queue);
-
-        /*-------------------- restaurant --------------------*/
-        // 声明订单与商家微服务使用的 Exchange
-        Exchange orderRestaurantExchange = new DirectExchange("exchange.order.restaurant");
-        rabbitAdmin.declareExchange(orderRestaurantExchange);
-        // 将 exchange.order.restaurant 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
-        Binding orderBinding = new Binding("queue.order",
-                Binding.DestinationType.QUEUE,
-                "exchange.order.restaurant",
-                "key.order",
-                null);
-        rabbitAdmin.declareBinding(orderBinding);
-        /*-----------------------------------------------------*/
-
-        /*-------------------- deliveryman --------------------*/
-        // 声明订单与骑手微服务使用的 Exchange
-        Exchange orderDeliverymanExchange = new DirectExchange("exchange.order.deliveryman");
-        rabbitAdmin.declareExchange(orderDeliverymanExchange);
-        // 将 exchange.order.deliveryman 这个 Exchange 与 queue.order 这个队列进行绑定（Binding）
-        orderBinding = new Binding("queue.order",
-                Binding.DestinationType.QUEUE,
-                "exchange.order.deliveryman",
-                "key.order",
-                null);
-        rabbitAdmin.declareBinding(orderBinding);
-        /*-----------------------------------------------------*/
-
-        /*-------------------- settlement --------------------*/
-        // 声明订单与结算微服务使用的 Exchange
-        Exchange orderSettlementExchange = new FanoutExchange("exchange.order.settlement");
-        rabbitAdmin.declareExchange(orderSettlementExchange);
-        orderBinding = new Binding("queue.order",
-                Binding.DestinationType.QUEUE,
-                "exchange.order.settlement",
-                "key.order",
-                null);
-        rabbitAdmin.declareBinding(orderBinding);
-        /*-----------------------------------------------------*/
-
-        /*-------------------- reward --------------------*/
-        // 声明订单与积分微服务使用的 Exchange
-        Exchange orderRewardExchange = new TopicExchange("exchange.order.reward");
-        rabbitAdmin.declareExchange(orderRewardExchange);
-        orderBinding = new Binding("queue.order",
-                Binding.DestinationType.QUEUE,
-                "exchange.order.reward",
-                "key.order",
-                null);
-        rabbitAdmin.declareBinding(orderBinding);
-        /*-------------------- reward --------------------*/
-
+        connectionFactory.createConnection();
+        return connectionFactory;
     }
+
+    /**
+     * 将 RabbitAdmin 交给 Spring 管理
+     *
+     * @param connectionFactory
+     * @return
+     */
+    @Bean
+    @Order(2)
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+        rabbitAdmin.setAutoStartup(true);
+        return rabbitAdmin;
+    }
+
 }

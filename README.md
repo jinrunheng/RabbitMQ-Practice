@@ -309,6 +309,19 @@ AMQP 协议中：
 - removeBinding:删除绑定关系
 - getQueueProperties：查询队列属性
 
+### RabbitAdmin 声明式配置
+
+- 将 Exchange，Queue，Binding 声明为 Bean
+- 再将 RabbitAdmin 声明为 Bean
+- Exchange，Queue，Binding 即自动创建
+
+### RabbitAdmin 声明式配置的优点
+
+- 将声明和创建工作分开，解耦多人工作
+- 不需要显示声明，减少代码量，减少 Bug
+
+----- TODO 5-4
+
 ## Bug report
 数据库字符集不正确的解决方法：
 ```sql
