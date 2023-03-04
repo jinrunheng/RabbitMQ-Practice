@@ -277,7 +277,7 @@ AMQP 协议中：
 
 ### RabbitTemplate
 
-- 相比于 basicPublis，功能要更加强大，能自动实现消息转换等功能
+- 相比于 basicPublish，功能要更加强大，能自动实现消息转换等功能
 
 ### RabbitAdmin
 
@@ -320,7 +320,14 @@ AMQP 协议中：
 - 将声明和创建工作分开，解耦多人工作
 - 不需要显示声明，减少代码量，减少 Bug
 
------ TODO 5-4
+
+### RabbitTemplate
+
+- RabbitTemplate 与 RestTemplate 类似，使用了模版方法设计模式
+- RabbitTemplate 提供了丰富的功能，方便消息的收发
+- RabbitTemplate 既可以显示传入配置，也可以隐式声明配置
+
+
 
 ## Bug report
 数据库字符集不正确的解决方法：

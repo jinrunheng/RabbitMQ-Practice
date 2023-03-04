@@ -6,11 +6,11 @@ import com.github.order.enummeration.OrderStatusEnum;
 import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import com.github.order.vo.OrderCreateVO;
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -26,6 +26,10 @@ import java.util.Date;
 @Service
 @Slf4j
 public class OrderService {
+
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Resource
     private OrderDetailMapper orderDetailMapper;
@@ -56,40 +60,60 @@ public class OrderService {
                 .accountId(orderDetail.getAccountId())
                 .build();
 
-        // 向商家微服务发送消息
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost("localhost");
-        try (Connection connection = connectionFactory.newConnection();
-             Channel channel = connection.createChannel()) {
-            String message = JSONUtils.objectToJson(orderMessageDTO);
-            // 消息确认机制开启
-            channel.confirmSelect();
-            // 发送消息
-            assert message != null;
+        // 使用 RabbitTemplate 向商家微服务发送消息
+        String messageString = JSONUtils.objectToJson(orderMessageDTO);
+        MessageProperties messageProperties = new MessageProperties();
+        //  设置单条消息 TTL 为 1 min
+        messageProperties.setExpiration("60000");
+        assert messageString != null;
+        Message message = new Message(messageString.getBytes(), messageProperties);
+        rabbitTemplate.send(
+                "exchange.order.restaurant",
+                "key.restaurant",
+                message
+        );
 
-            // 设置单条消息 TTL 为 1 min
-            AMQP.BasicProperties properties = new AMQP.BasicProperties()
-                    .builder()
-                    .expiration("60000")
-                    .build();
+//        rabbitTemplate.convertAndSend(
+//                "exchange.order.restaurant",
+//                "key.restaurant",
+//                messageString
+//        );
 
-
-            channel.basicPublish(
-                    "exchange.order.restaurant",
-                    "key.restaurant",
-                    properties,
-                    message.getBytes()
-            );
-
-            log.info("message send");
-            if (channel.waitForConfirms()) {
-                log.info("RabbitMQ confirm success");
-            } else {
-                log.error("RabbitMQ confirm failed");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        log.info("message send");
+//        // 向商家微服务发送消息
+//        ConnectionFactory connectionFactory = new ConnectionFactory();
+//        connectionFactory.setHost("localhost");
+//        try (Connection connection = connectionFactory.newConnection();
+//             Channel channel = connection.createChannel()) {
+//            String message = JSONUtils.objectToJson(orderMessageDTO);
+//            // 消息确认机制开启
+//            channel.confirmSelect();
+//            // 发送消息
+//            assert message != null;
+//
+//            // 设置单条消息 TTL 为 1 min
+//            AMQP.BasicProperties properties = new AMQP.BasicProperties()
+//                    .builder()
+//                    .expiration("60000")
+//                    .build();
+//
+//
+//            channel.basicPublish(
+//                    "exchange.order.restaurant",
+//                    "key.restaurant",
+//                    properties,
+//                    message.getBytes()
+//            );
+//
+//            log.info("message send");
+//            if (channel.waitForConfirms()) {
+//                log.info("RabbitMQ confirm success");
+//            } else {
+//                log.error("RabbitMQ confirm failed");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
     }
 }
