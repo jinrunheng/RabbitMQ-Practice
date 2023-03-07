@@ -1,9 +1,11 @@
 package com.github.order.config;
 
 import com.github.order.service.OrderMessageService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.core.annotation.Order;
  * @Version 1.0
  */
 @Configuration
+@Slf4j
 public class RabbitConfig {
 
     @Autowired
@@ -166,6 +169,9 @@ public class RabbitConfig {
         connectionFactory.setPort(5672);
         connectionFactory.setUsername("guest");
         connectionFactory.setPassword("guest");
+        // publisherConfirmType 与 publisherReturns 必须打开，否则消息确认机制与消息返回机制不会生效
+        connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED);
+        connectionFactory.setPublisherReturns(true);
         connectionFactory.createConnection();
         return connectionFactory;
     }
@@ -187,6 +193,24 @@ public class RabbitConfig {
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        // 开启消息返回机制
+        // 消息返回机制是一种监听机制，它能够监听生产者发送到 Broker 的消息是否可以被成功路由，如果消息不可达，就会返回信号通知消息发送端
+        // 消息发送端便可以做出相应的处理
+        rabbitTemplate.setMandatory(true);
+        rabbitTemplate.setReturnsCallback(returned -> {
+            log.info("message:{}", returned.getMessage().toString());
+            log.info("replyCode:{}", returned.getReplyCode());
+            log.info("replyText:{}", returned.getReplyText());
+            log.info("exchange:{}", returned.getExchange());
+            log.info("routingKey:{}", returned.getRoutingKey());
+        });
+        // 开启消息确认机制
+        // 消息确认机制能够监听生产者的消息是否成功发送到 RabbitMQ
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            log.info("correlationData:{}", correlationData);
+            log.info("ack:{}", ack);
+            log.info("cause:{}", cause);
+        });
         return rabbitTemplate;
     }
 
