@@ -1,75 +1,70 @@
-package com.github.order.service;
+package com.github.order.config;
 
 import com.github.order.dto.OrderMessageDTO;
 import com.github.order.entity.OrderDetail;
 import com.github.order.enummeration.OrderStatusEnum;
 import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
+import org.springframework.amqp.core.AcknowledgeMode;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.Resource;
+import java.io.IOException;
 
 /**
  * @Author Dooby Kim
- * @Date 2022/10/29 9:46 下午
+ * @Date 2023/3/7 10:17 下午
  * @Version 1.0
- * <p>
- * 消息处理相关业务逻辑
  */
-@Service
+@Configuration
 @Slf4j
-public class OrderMessageService {
+public class MessageListenerConfig {
 
-    @Resource
+    @Autowired
     private OrderDetailMapper orderDetailMapper;
 
-    public OrderMessageService() {
-        deliverCallback = (this::handle);
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Bean
+    public SimpleMessageListenerContainer simpleMessageListenerContainer(ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer messageListenerContainer = new SimpleMessageListenerContainer(connectionFactory);
+        messageListenerContainer.setQueueNames("queue.order");
+        messageListenerContainer.setConcurrentConsumers(3);
+        messageListenerContainer.setMaxConcurrentConsumers(5);
+        // 开启自动确认 ack
+        // messageListenerContainer.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        // 设置回调方法，相当于 channel.basicConsume
+        // messageListenerContainer.setMessageListener(this::handle);
+
+        // 消费端开启手动确认
+        messageListenerContainer.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+        messageListenerContainer.setMessageListener((ChannelAwareMessageListener) this::handle);
+        // 消费端限流
+        messageListenerContainer.setPrefetchCount(20);
+        return messageListenerContainer;
     }
 
-    /**
-     * 声明消息队列，交换机，绑定，消息的处理；异步线程，使用 @Async 注解
-     */
-    @Async
-    public void handleMessage() {
-
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost("localhost");
-
-        try (
-                Connection connection = connectionFactory.newConnection();
-                Channel channel = connection.createChannel()
-        ) {
-
-            // 监听，消费的回调方法
-//            channel.basicConsume("queue.order",
-//                    true,
-//                    deliverCallback,
-//                    consumerTag -> {
-//                    });
-
-            while (true) {
-                Thread.sleep(1000000);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+    private void handle(Message message, Channel channel) {
+        try {
+            // 消费端开启手动确认
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            handle(message);
+        } catch (IOException e) {
+            log.error(e.getMessage());
         }
-
     }
 
-    // 消费者收到消息并消费的回调方法
-    DeliverCallback deliverCallback;
-
-    private void handle(String consumerTag, Delivery message) {
+    private void handle(Message message) {
         String msg = new String(message.getBody());
-
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-        connectionFactory.setHost("localhost");
-
         try {
             // 将消息体反序列化为 DTO
             OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msg, OrderMessageDTO.class);
@@ -90,18 +85,13 @@ public class OrderMessageService {
                         orderDetail.setStatus(OrderStatusEnum.RESTAURANT_CONFIRMED);
                         orderDetail.setPrice(orderMessageDTO.getPrice());
                         orderDetailMapper.update(orderDetail);
+                        String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                        assert messageToSend != null;
                         // 向骑手微服务发送消息
-                        try (
-                                Connection connection = connectionFactory.newConnection();
-                                Channel channel = connection.createChannel()
-                        ) {
-                            String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
-                            assert messageToSend != null;
-                            channel.basicPublish("exchange.order.deliveryman",
-                                    "key.deliveryman",
-                                    null,
-                                    messageToSend.getBytes());
-                        }
+                        rabbitTemplate.send("exchange.order.deliveryman",
+                                "key.deliveryman",
+                                new Message(messageToSend.getBytes())
+                        );
                     } else {
                         // 否则订单失败
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
@@ -120,20 +110,11 @@ public class OrderMessageService {
                         orderDetail.setDeliverymanId(orderMessageDTO.getDeliverymanId());
                         orderDetailMapper.update(orderDetail);
                         // 将消息发送给结算微服务
-                        try (
-                                Connection connection = connectionFactory.newConnection();
-                                Channel channel = connection.createChannel();
-                        ) {
-                            String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
-                            assert messageToSend != null;
-                            // 因为 exchange.order.settlement 交换机 为 fanout （广播）模式，所以 routingKey 是什么无关紧要
-                            channel.basicPublish(
-                                    "exchange.settlement.order",
-                                    "key.settlement",
-                                    null,
-                                    messageToSend.getBytes()
-                            );
-                        }
+                        String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                        assert messageToSend != null;
+                        rabbitTemplate.send("exchange.settlement.order",
+                                "key.settlement",
+                                new Message(messageToSend.getBytes()));
                     } else {
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);
                         orderDetailMapper.update(orderDetail);
@@ -151,17 +132,13 @@ public class OrderMessageService {
                         orderDetail.setSettlementId(orderMessageDTO.getSettlementId());
                         orderDetailMapper.update(orderDetail);
                         // 给积分微服务发送消息
-                        try (Connection connection = connectionFactory.newConnection();
-                             Channel channel = connection.createChannel()) {
-                            String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
-                            assert messageToSend != null;
-                            channel.basicPublish(
-                                    "exchange.order.reward",
-                                    "key.reward",
-                                    null,
-                                    messageToSend.getBytes()
-                            );
-                        }
+                        String messageToSend = JSONUtils.objectToJson(orderMessageDTO);
+                        assert messageToSend != null;
+                        rabbitTemplate.send(
+                                "exchange.order.reward",
+                                "key.reward",
+                                new Message(messageToSend.getBytes())
+                        );
                     } else {
                         // 如果返回订单消息体中 settleId 为空，则代表订单失败
                         orderDetail.setStatus(OrderStatusEnum.ORDER_FAILED);

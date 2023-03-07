@@ -83,8 +83,6 @@ public class OrderMessageService {
             args.put("x-dead-letter-exchange", "exchange.dlx");
             // x-expire 为队列的存活时间，如果在一定的时间内，队列没有接收到消息，队列会被删除；不要加入这样一个参数
             // args.put("x-expire",60000);
-            // 声明队列 Queue
-
             // 声明队列
             channel.queueDeclare(
                     "queue.restaurant",
