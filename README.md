@@ -336,6 +336,17 @@ AMQP 协议中：
 - 设置具体的监听器，消息转换器等
 - 支持动态设置，运行中修改监听器配置
 
+### SimpleMessageListenerContainer 原理
+... 
+### MessageListenerAdapter 消息监听适配器
+- 适配器设计模式
+- 解决业务逻辑代码无法修改的问题
+
+### MessageListenerAdapter 使用方法
+- 简单模式：实现 handleMessage 方法
+- 高阶模式：自定义 "队列名 -> 方法名" 映射关系
+ 
+
 
 
 

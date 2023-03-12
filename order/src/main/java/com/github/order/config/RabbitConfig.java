@@ -1,13 +1,11 @@
 package com.github.order.config;
 
-import com.github.order.service.OrderMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,17 +20,7 @@ import org.springframework.core.annotation.Order;
  */
 @Configuration
 @Slf4j
-@AutoConfigureOrder(1)
 public class RabbitConfig {
-
-    @Autowired
-    private OrderMessageService orderMessageService;
-
-    @Autowired
-    @Order(4)
-    public void startListenMessage() {
-        orderMessageService.handleMessage();
-    }
 
 
     /**

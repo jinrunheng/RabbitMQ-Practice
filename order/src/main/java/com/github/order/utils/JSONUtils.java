@@ -3,6 +3,8 @@ package com.github.order.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+
 /**
  * @Author Dooby Kim
  * @Date 2022/10/30 4:49 下午
@@ -34,6 +36,16 @@ public class JSONUtils {
      * @return
      */
     public static Object jsonToObject(String jsonStr, Class<?> clazz) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(jsonStr, clazz);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static Object jsonToObject(byte[] jsonStr, Class<?> clazz) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.readValue(jsonStr, clazz);
