@@ -346,6 +346,18 @@ AMQP 协议中：
 - 简单模式：实现 handleMessage 方法
 - 高阶模式：自定义 "队列名 -> 方法名" 映射关系
  
+### MessageConverter
+- 之前收发消息时，使用了 Byte[] 数组作为消息体
+- 编写业务逻辑时，需要使用 Java 对象
+- MessageConverter 用来在收发消息时自动转换消息
+
+### Jackson2JsonMessageConverter
+- 最常用的 MessageConverter，用来转换 Json 格式消息
+- 配合 ClassMapper 可以直接转换 POJO 对象
+
+### 自定义 MessageConverter
+- 实现 MessageConverter 接口
+- 重写 toMessage,fromMessage 方法
 
 
 

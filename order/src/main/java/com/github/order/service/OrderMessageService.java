@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 
 /**
  * @Author Dooby Kim
@@ -55,14 +54,11 @@ public class OrderMessageService {
 //    }
 
     // 消费者收到消息并消费的回调方法
-    public void handleMessage(byte[] msg) {
+    public void handleMessage(OrderMessageDTO orderMessageDTO) {
 
-        log.info("handleMessage, msg : {}", new String(msg));
+        log.info("handleMessage, msg : {}", orderMessageDTO);
 
         try {
-            // 将消息体反序列化为 DTO
-            OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(msg, OrderMessageDTO.class);
-            // 从数据库中读取订单
             assert orderMessageDTO != null;
             OrderDetail orderDetail = orderDetailMapper.queryOrder(orderMessageDTO.getOrderId());
 
