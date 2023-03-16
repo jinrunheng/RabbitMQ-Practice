@@ -359,6 +359,18 @@ AMQP 协议中：
 - 实现 MessageConverter 接口
 - 重写 toMessage,fromMessage 方法
 
+### RabbitListener
+- RabbitListener 是 Spring Boot 架构中，监听消息的"终极方案"
+- RabbitListener 使用注解声明，对业务代码无侵入
+- RabbitListener 可以在 Spring Boot 配置文件中进行配置
+
+### @RabbitListener 注解
+- @RabbitListener 是一个组合注解，可以嵌套以下注解：
+- @Exchange：自动声明 Exchange
+- @Queue：自动声明队列
+- @QueueBinding：自动声明绑定关系
+
+
 
 
 

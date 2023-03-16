@@ -6,12 +6,16 @@ import com.github.order.enummeration.OrderStatusEnum;
 import com.github.order.mapper.OrderDetailMapper;
 import com.github.order.utils.JSONUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 
 /**
  * @Author Dooby Kim
@@ -54,10 +58,34 @@ public class OrderMessageService {
 //    }
 
     // 消费者收到消息并消费的回调方法
-    public void handleMessage(OrderMessageDTO orderMessageDTO) {
+    @RabbitListener(
+            bindings = {
+                    @QueueBinding(
+                            value = @Queue(name = "queue.order"),
+                            exchange = @Exchange(name = "exchange.order.restaurant"),
+                            key = "key.order"
+                    ),
+                    @QueueBinding(
+                            value = @Queue(name = "queue.order"),
+                            exchange = @Exchange(name = "exchange.order.deliveryman"),
+                            key = "key.order"
+                    ),
+                    @QueueBinding(
+                            value = @Queue(name = "queue.order"),
+                            exchange = @Exchange(name = "exchange.order.settlement", type = ExchangeTypes.FANOUT),
+                            key = "key.order"
+                    ),
+                    @QueueBinding(
+                            value = @Queue(name = "queue.order"),
+                            exchange = @Exchange(name = "exchange.order.reward", type = ExchangeTypes.TOPIC),
+                            key = "key.order"
+                    ),
+            }
+    )
+    public void handleMessage(@Payload Message message) throws IOException {
 
-        log.info("handleMessage, msg : {}", orderMessageDTO);
-
+        log.info("handleMessage, msg : {}", new String(message.getBody()));
+        OrderMessageDTO orderMessageDTO = (OrderMessageDTO) JSONUtils.jsonToObject(message.getBody(), OrderMessageDTO.class);
         try {
             assert orderMessageDTO != null;
             OrderDetail orderDetail = orderDetailMapper.queryOrder(orderMessageDTO.getOrderId());
