@@ -24,12 +24,12 @@ import java.util.concurrent.TimeoutException;
 @Configuration
 public class RabbitConfig {
 
-    @Autowired
-    private OrderMessageService orderMessageService;
-
-    @Autowired
-    public void startListenMessage() {
-        orderMessageService.handleMessage();
-    }
+//    @Autowired
+//    private OrderMessageService orderMessageService;
+//
+//    @Autowired
+//    public void startListenMessage() {
+//        orderMessageService.handleMessage();
+//    }
 
 }
